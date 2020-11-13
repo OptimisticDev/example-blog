@@ -29,7 +29,7 @@ SECRET_KEY = 'q6gt_q-os$#+1^(%kl0a!y)gg9#nbj3c56)3i8e)p=tr9=*@q)'
 # JWT_SECRET_KEY = 'JWT_SECRET_KEYJWT_SECRET_KEYJWT_SECRET_KEY'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
