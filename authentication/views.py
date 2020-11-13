@@ -1,64 +1,43 @@
-from django.http import Http404
-from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
+from django.shortcuts import render
+from rest_framework.generics import GenericAPIView
+from .serializer import UserSerializer
+from rest_framework.response import Response
+from rest_framework import status
+from django.conf import settings
+from django.contrib import auth
+import jwt
 
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+#Create your views here
 
+class RegisterView(GenericAPIView):
+    serializer_class = UserSerializer
+    def post(self, request):
+        serializer = UserSerializer(data = request.data)
 
-from .forms import CreateUserForm
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status = status.HTTP_201_CREATED)
 
+        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
 
-# LOGIN VIEW ENDPOINT
+class LoginView(GenericAPIView):
+    def post(self, request):
+        data = request.data
+        username = data.get('username', '')
+        password = data.get('password', '')
+        user = auth.authenticate(username = username, password = password)
 
-def logIn(request):
-    
-    # Loggedin user can't access this route 
+        if user: 
+            auth_token = jwt.encode({'username': user.username}, settings.SECRET_KEY)
+            serializer = UserSerializer(user)
 
-    if request.user.is_authenticated:
-        return redirect('/')
-    
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        
-        # Check user is authenticated or not
-        user = authenticate(request, username = username, password = password)
-        
-        # Authenticated user login successfully and redirect to home page
-        if user is not None:
-            login(request,user)
-            print("login successfully")
-            return redirect('/')
-
-    return render(request, 'login.html')
-
-    
-
-# REGISTER USER VIEW ENDPOINT
-
-def register(request):
-    form = CreateUserForm()
-
-    # Loggedin user can't access this route 
-    if request.user.is_authenticated:
-        return redirect('/')
-
-    if request.method == 'POST':
-        form = CreateUserForm(request.POST)
-      
-        # After validate form save user in db and redirect to login page
-        if form.is_valid():
-            form.save()
-            return redirect('/auth/login')
-
-    return render(request, 'register.html', {'form': form})
+            data={
+                'user': serializer.data,
+                'token': auth_token,
+            }
+            
+            return Response(data, status = status.HTTP_200_OK)
+            #SEND RES
+        return Response({'details': 'Invalid credentials'}, status = status.HTTP_401_UNAUTHORIZED)
 
 
-# Protect '/auth/logout' route. Only loggedin user access this route
-@login_required(login_url = '/auth/login')
-
-def Logout(request):
-    logout(request)
-    return redirect('/auth/login')
