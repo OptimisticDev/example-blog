@@ -13,6 +13,7 @@ idna==2.10
 pipenv==2020.11.4
 psycopg2==2.8.6
 PyJWT==1.7.1
+python-dotenv==0.15.0
 pytz==2020.4
 requests==2.24.0
 six==1.15.0
